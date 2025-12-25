@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier Prime', monospace; }
+        body { background: #000; color: #fff; padding: 30px; overflow-x: hidden; }
+
+        #header { 
+            font-size: 14px; 
+            color: #fff; 
+            font-weight: 700; 
+            margin-bottom: 40px; 
+            text-transform: lowercase;
+            border-bottom: 1px solid #1a1a1a;
+            padding-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        .node-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); 
+            gap: 20px; 
+            width: 100%;
+        }
+        .node { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            cursor: pointer;
+            padding: 10px 0;
+        }
+        .node img { 
+            width: 65px; 
+            height: 65px; 
+            filter: grayscale(1) invert(1); 
+            margin-bottom: 8px; 
+            border: 1px solid #1a1a1a; 
+            background: #000;
+        }
+        .node:active img { background: #fff; filter: grayscale(1) invert(0); }
+        .node span { font-size: 10px; color: #444; font-weight: 700; letter-spacing: 1px; }
+
+        #overlay { 
+            position: fixed; 
+            top: 0; left: 0; width: 100%; height: 100%; 
+            background: #000; 
+            display: none; 
+            flex-direction: column; 
+            padding: 40px;
+            z-index: 1000;
+        }
+        #close-btn { font-size: 11px; color: #fff; margin-bottom: 50px; cursor: pointer; text-decoration: underline; }
+        #app-icon-large { width: 100px; height: 100px; border: 1px solid #fff; margin-bottom: 30px; filter: grayscale(1) invert(1); }
+        #app-id { font-size: 10px; color: #444; margin-bottom: 5px; }
+        #app-name { font-size: 20px; font-weight: 700; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px; }
+        #app-desc { font-size: 12px; color: #bbb; line-height: 1.6; margin-bottom: 40px; max-width: 400px; border-left: 2px solid #1a1a1a; padding-left: 15px; }
+        
+        .dl-btn { 
+            border: 2px solid #fff; 
+            padding: 20px; 
+            color: #000; 
+            background: #fff;
+            text-decoration: none; 
+            font-size: 11px; 
+            font-weight: 700;
+            width: fit-content;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+        .dl-btn:active { background: #000; color: #fff; }
+    </style>
+</head>
+<body>
+
+    <div id="header">une galerie brutale</div>
+
+    <div class="node-grid" id="grid"></div>
+
+    <div id="overlay">
+        <div id="close-btn" onclick="closeOverlay()">[ ESCAPE_SESSION ]</div>
+        <img id="app-icon-large" src="" alt="">
+        <div id="app-id">ID_NULL</div>
+        <div id="app-name">NAME</div>
+        <div id="app-desc">DESCRIPTION</div>
+        <a id="dl-link" href="#" class="dl-btn">EXECUTE_BINARY_FETCH</a>
+    </div>
+
+    <script>
+        const apps = [
+            {id: "DM-00", version: 0, weight: "4.2MB", name: "Data Module 00", icon: "https://i.ibb.co/QZmT0NQ/DM-00.png", desc: "An mp3 player for the eyes and ears. Originating from the d00m legacy kernel."},
+            {id: "GT-01", version: 1, weight: "2.1MB", name: "Greenwich Time", icon: "https://i.ibb.co/vvhHQfnd/GT-01.png", desc: "A news app to not distract you. Pure information transmission."},
+            {id: "CH-02", version: 2, weight: "1.8MB", name: "Choice Lock", icon: "https://i.ibb.co/pjwmYnf5/CH-02.png", desc: "A decision-making tool to lock you into your choices."},
+            {id: "SR-03", version: 3, weight: "2.5MB", name: "Direct Search", icon: "https://i.ibb.co/9HC1VCNk/SR-03.png", desc: "A search app to get you onto your links."},
+            {id: "MS-04", version: 4, weight: "3.1MB", name: "Wise Message", icon: "https://i.ibb.co/fVBC6gYN/MS-04.png", desc: "A messager to talk with EVERYONE, but to choose your words wisely."},
+            {id: "NW-05", version: 5, weight: "1.2MB", name: "Net Examiner", icon: "https://i.ibb.co/mrm0455P/NW-05.png", desc: "An app to examine your network."},
+            {id: "FM-06", version: 6, weight: "5.4MB", name: "Audio Analysis", icon: "https://i.ibb.co/fYZgQDV4/FM-06.png", desc: "An audio analysis environment."},
+            {id: "RD-07", version: 7, weight: "2.9MB", name: "Pure Reddit", icon: "https://i.ibb.co/KzwYw6Pq/RD-07.png", desc: "A minimal Reddit client that keeps you distraction-free."},
+            {id: "FN-08", version: 8, weight: "0.8MB", name: "Permanent Field", icon: "https://i.ibb.co/1H0sZbw/FN-08.png", desc: "Field notes made to be kept."},
+            {id: "CC-09", version: 9, weight: "0.5MB", name: "Mental Cypher", icon: "https://i.ibb.co/gMCFCcrB/CC-09.png", desc: "A cypher to keep in mind."},
+            {id: "BT-10", version: 10, weight: "1.1MB", name: "Core Analysis", icon: "https://i.ibb.co/xt4T2F2w/BT-10.png", desc: "A device analysis and level."},
+            {id: "IC-11", version: 11, weight: "3.3MB", name: "Daily Oracle", icon: "https://i.ibb.co/fz5sGbcc/IC-11.png", desc: "An analysis of the day ahead."}
+        ];
+
+        function getBinaryUrl(ver) {
+            const baseUrl = "https://github.com/yedeee/binaries/releases/download/ye/base";
+            // Logic: if 0 -> base.apk | if >0 -> base.X.apk
+            return ver === 0 ? `${baseUrl}.apk` : `${baseUrl}.${ver}.apk`;
+        }
+
+        function init() {
+            const grid = document.getElementById('grid');
+            apps.forEach(app => {
+                const div = document.createElement('div');
+                div.className = 'node';
+                div.onclick = () => openOverlay(app);
+                div.innerHTML = `<img src="${app.icon}"><span>${app.id}</span>`;
+                grid.appendChild(div);
+            });
+        }
+
+        function openOverlay(app) {
+            document.getElementById('app-icon-large').src = app.icon;
+            document.getElementById('app-id').innerText = `NODE::${app.id} [VER_${app.version}] [${app.weight}]`;
+            document.getElementById('app-name').innerText = app.name;
+            document.getElementById('app-desc').innerText = app.desc;
+            document.getElementById('dl-link').href = getBinaryUrl(app.version);
+            document.getElementById('overlay').style.display = 'flex';
+        }
+
+        function closeOverlay() {
+            document.getElementById('overlay').style.display = 'none';
+        }
+
+        init();
+    </script>
+</body>
+          </html>
+          
